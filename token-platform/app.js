@@ -6,10 +6,13 @@
   'use strict';
 
   var API = 'https://xahauindex.dev';
-  var PAGE_SIZE = 12;
+  // List endpoints max out at per_page 250. Trades use page, so the same cap applies.
+  // Candles take limit, which maxes at 1000. One full page per request.
+  var PAGE_SIZE = 250;
   var TAPE_PAGE_SIZE = 250;
+  var CANDLE_LIMIT = 1000;
+  var PERIODS = { '1h': true, '24h': true, '7d': true };
   var MAX_CALLS = 50;
-  var CANDLE_LIMIT = { '1h': 72, '24h': 90, '7d': 52 };
   var SORTS = { holder_count: 'Holders', trust_count: 'Trust lines', first_ledger: 'First ledger' };
 
   var cache = new Map();
@@ -327,7 +330,7 @@
   function candlesPath(pair, period) {
     var params = new URLSearchParams();
     params.set('period', period);
-    params.set('limit', String(CANDLE_LIMIT[period] || 72));
+    params.set('limit', String(CANDLE_LIMIT));
     if (pair.base.issuer) params.set('base_issuer', pair.base.issuer);
     if (pair.counter.issuer) params.set('counter_issuer', pair.counter.issuer);
     return (
@@ -546,7 +549,7 @@
       var periodBtn = target.closest('[data-period]');
       if (periodBtn) {
         var period = periodBtn.getAttribute('data-period');
-        if (period && period !== view.period && CANDLE_LIMIT[period]) {
+        if (period && period !== view.period && PERIODS[period]) {
           view.period = period;
           syncPeriods();
           loadCandles();
@@ -969,7 +972,8 @@
     var plotW = width - pad.l - pad.r;
     var slot = rows.length === 1 ? 36 : plotW / rows.length;
     var origin = rows.length === 1 ? pad.l + (plotW - slot) / 2 : pad.l;
-    var bodyW = Math.max(3, Math.min(16, slot * 0.62));
+    var bodyW = Math.min(16, slot * 0.62);
+    var wickWidth = slot < 4 ? Math.max(0.4, Math.min(1.5, slot * 0.45)) : 1.5;
 
     for (var tick = 0; tick < 4; tick++) {
       var value = max - ((max - min) * tick) / 3;
@@ -1015,7 +1019,7 @@
       wick.setAttribute('y1', String(yPrice(candle.high)));
       wick.setAttribute('y2', String(yPrice(candle.low)));
       wick.setAttribute('stroke', color);
-      wick.setAttribute('stroke-width', '1.5');
+      wick.setAttribute('stroke-width', String(wickWidth));
       svg.appendChild(wick);
       var openY = yPrice(candle.open);
       var closeY = yPrice(candle.close);
