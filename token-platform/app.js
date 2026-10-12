@@ -139,7 +139,7 @@
     return account.slice(0, 6) + '…' + account.slice(-4);
   }
 
-  function formatAmount(raw) {
+  function formatAmount(raw, places) {
     if (raw == null || raw === '') return '—';
     var text = String(raw);
     if (/e/i.test(text)) return text;
@@ -148,7 +148,8 @@
     var parts = unsigned.split('.');
     if (!/^\d+$/.test(parts[0] || '')) return text;
     var whole = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    var frac = (parts[1] || '').slice(0, 6).replace(/0+$/, '');
+    var limit = places == null ? 4 : places;
+    var frac = (parts[1] || '').slice(0, limit).replace(/0+$/, '');
     var body = frac ? whole + '.' + frac : whole;
     return negative ? '-' + body : body;
   }
@@ -181,9 +182,9 @@
     var date = new Date(unix * 1000);
     if (Number.isNaN(date.getTime())) return '';
     if (period === '1h') {
-      return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      return date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
     }
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   function transferLabel(rate) {
@@ -619,7 +620,7 @@
       }
       stats += statHtml('Holders', esc(formatCount(token.holder_count)));
       stats += statHtml('Trust lines', esc(formatCount(token.trust_count)));
-      stats += statHtml('Supply', esc(formatAmount(token.supply)), 'wide');
+      stats += statHtml('Supply', esc(formatAmount(token.supply, 2)), 'wide');
       var fee = profile ? transferLabel(profile.transfer_rate) : '';
       if (fee) stats += statHtml('Transfer rate', esc(fee));
       var remarks = token.remarks || {};
@@ -1018,11 +1019,12 @@
       svg.appendChild(wick);
       var openY = yPrice(candle.open);
       var closeY = yPrice(candle.close);
+      var bodyH = Math.max(4, Math.abs(closeY - openY));
       var body = document.createElementNS(svgNS, 'rect');
       body.setAttribute('x', String(cx - bodyW / 2));
-      body.setAttribute('y', String(Math.min(openY, closeY)));
+      body.setAttribute('y', String((openY + closeY) / 2 - bodyH / 2));
       body.setAttribute('width', String(bodyW));
-      body.setAttribute('height', String(Math.max(1.5, Math.abs(closeY - openY))));
+      body.setAttribute('height', String(bodyH));
       body.setAttribute('fill', color);
       body.setAttribute('rx', '1');
       svg.appendChild(body);

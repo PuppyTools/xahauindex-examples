@@ -282,8 +282,9 @@ code, .mono {
   font-size: 18px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
+.stat.wide { grid-column: span 2; }
 .up { color: var(--teal); }
 .down { color: var(--rose); }
 .flat { color: var(--muted); }
@@ -361,5 +362,6 @@ code, .mono {
   h2 { font-size: 32px; }
   .filters label, .filters .primary, .filters input[type="search"], .filters select { width: 100%; }
   .identity { flex-direction: column; }
+  .stat.wide { grid-column: auto; }
   .remarks div { grid-template-columns: 1fr; gap: 2px; }
 }
